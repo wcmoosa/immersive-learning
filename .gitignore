@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 .venv/
 .pytest_cache/
+build/
+*.egg-info/
 
 # Secrets — real values live in .env, never committed (see .env.example)
 .env

@@ -1,0 +1,5 @@
+# Shell scripts and the entrypoint must stay LF or they break in the Linux
+# container (`#!/bin/sh\r` is not a valid interpreter path).
+*.sh text eol=lf
+docker-entrypoint.sh text eol=lf
+Dockerfile text eol=lf

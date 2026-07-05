@@ -1,0 +1,112 @@
+:root {
+  --bg: #0f1720;
+  --surface: #172230;
+  --surface-2: #1e2c3d;
+  --line: #2a3a4d;
+  --ink: #e8eef5;
+  --muted: #9fb0c3;
+  --brand: #3fb6a8;
+  --brand-ink: #0f1720;
+  --accent: #f0a500;
+  --up: #2ecc71;
+  --down: #ff5c5c;
+  --radius: 12px;
+  --shadow: 0 6px 24px rgba(0, 0, 0, 0.28);
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: radial-gradient(1200px 600px at 80% -10%, #1a2c3d 0%, var(--bg) 55%);
+  color: var(--ink);
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.55;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(15, 23, 32, 0.85);
+  backdrop-filter: blur(6px);
+  flex-wrap: wrap;
+}
+.brand { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+.brand-mark { color: var(--brand); font-size: 1.3rem; }
+.brand-name { font-weight: 700; letter-spacing: 0.02em; font-size: 1.15rem; }
+.brand-sub { color: var(--muted); font-size: 0.82rem; }
+.topnav { display: flex; align-items: center; gap: 1rem; }
+.who { color: var(--muted); font-size: 0.9rem; }
+.role-chip {
+  display: inline-block; margin-left: 0.35rem; padding: 0.05rem 0.5rem;
+  border: 1px solid var(--line); border-radius: 999px; font-size: 0.72rem;
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--brand);
+}
+
+.container { width: 100%; max-width: 980px; margin: 0 auto; padding: 1.75rem 1.25rem; flex: 1; }
+
+.page-head { margin-bottom: 1.25rem; }
+h1 { font-size: 1.7rem; margin: 0 0 0.35rem; }
+h2 { font-size: 1.25rem; margin: 0 0 0.6rem; }
+.muted { color: var(--muted); }
+.hint { font-size: 0.85rem; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.5rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.25rem;
+}
+
+.stack { display: flex; flex-direction: column; gap: 0.9rem; }
+label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.9rem; color: var(--muted); }
+input[type=text], input[type=password], input[type=number], select, textarea {
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px;
+  color: var(--ink); padding: 0.6rem 0.7rem; font-size: 1rem; width: 100%;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand); border-color: var(--brand); }
+textarea { min-height: 96px; resize: vertical; font-family: inherit; }
+
+.btn {
+  display: inline-block; border: 1px solid var(--line); background: var(--surface-2);
+  color: var(--ink); padding: 0.6rem 1.1rem; border-radius: 8px; font-size: 0.95rem;
+  cursor: pointer; text-decoration: none; font-weight: 600; transition: filter 0.15s;
+}
+.btn:hover { filter: brightness(1.12); }
+.btn-primary { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+.btn-ghost { background: transparent; }
+.btn:disabled, .btn[aria-disabled=true] { opacity: 0.5; cursor: not-allowed; }
+.btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
+
+.alert { padding: 0.7rem 0.9rem; border-radius: 8px; margin-bottom: 0.9rem; font-size: 0.9rem; }
+.alert-error { background: rgba(255, 92, 92, 0.12); border: 1px solid var(--down); color: #ffbcbc; }
+.alert-info { background: rgba(63, 182, 168, 0.12); border: 1px solid var(--brand); color: #b8ede6; }
+
+.login-wrap { display: flex; justify-content: center; padding-top: 2rem; }
+.login-card { max-width: 420px; width: 100%; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em; }
+.table-scroll { overflow-x: auto; }
+
+.up { color: var(--up); }
+.down { color: var(--down); }
+
+.footsig { text-align: center; color: var(--muted); font-size: 0.78rem; padding: 1.5rem 1rem 2rem; border-top: 1px solid var(--line); margin-top: 1rem; }
+
+@media (max-width: 640px) {
+  .brand-sub { display: none; }
+  .container { padding: 1.25rem 1rem; }
+}

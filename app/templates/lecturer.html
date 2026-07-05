@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Lecturer view · Meridian Analyst{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Cohort overview</h1>
+  <p class="muted">Read-only view of participant progress, decisions, reflections, and AI coaching.</p>
+</div>
+
+{% if rows %}
+  {# Full participant table is rendered in U7. #}
+{% else %}
+<div class="card">
+  <p class="muted">No participant runs to display yet.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Sign in · Meridian Analyst{% endblock %}
+{% block content %}
+<div class="login-wrap">
+  <div class="card login-card">
+    <h1>Welcome, Analyst</h1>
+    <p class="muted">Sign in to manage your client's portfolio on the Meridian Exchange.</p>
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+    <form method="post" action="/login" class="stack">
+      <label>Username
+        <input type="text" name="username" autocomplete="username" autofocus required>
+      </label>
+      <label>Password
+        <input type="password" name="password" autocomplete="current-password" required>
+      </label>
+      <button class="btn btn-primary" type="submit">Sign in</button>
+    </form>
+    <p class="muted hint">Demo accounts are pre-seeded — ask the presenter for credentials.</p>
+  </div>
+</div>
+{% endblock %}

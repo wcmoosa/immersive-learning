@@ -19,6 +19,10 @@ DEFAULT_PACK_PATH = os.path.join(
     "scenario_meridian.yaml",
 )
 
+# The reserved allocation key for uninvested cash (shared across engine,
+# routes, and scoring so the allocation contract lives in one place).
+CASH_ID = "CASH"
+
 # Outcome categories for authored fallback coaching (plan R6).
 FEEDBACK_CATEGORIES = ("beat_kept", "beat_breached", "trailed_kept", "trailed_breached")
 

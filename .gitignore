@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Secrets — real values live in .env, never committed (see .env.example)
+.env
+
+# Runtime data
+*.db
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Agent worktrees
+.claude/worktrees/

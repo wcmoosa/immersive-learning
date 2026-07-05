@@ -1,0 +1,228 @@
+# =============================================================================
+# Meridian Exchange — Market Analyst Simulation scenario pack
+#
+# One authored, synthetic South African market. Everything here is fictional:
+# the exchange, the six companies, the client, and the events. Prices are in
+# ZAR and every price move carries a plain-language "why" so outcomes stay
+# explainable (no AI-invented numbers — plan R2, KTD4).
+#
+# Content is AI-drafted during development and human-reviewed before commit
+# (KTD3), which lets the demo tell the pilot's draft -> review -> approve story.
+#
+# Price model: `start_price` is the price when the student first allocates in
+# round 1. Each `rounds[r]` entry is the price at the END of round r. A share's
+# return during round r is prices[r] / (start_price if r == 1 else prices[r-1]).
+# =============================================================================
+
+title: "Meridian Exchange — FY2026 Client Portfolio"
+currency: ZAR
+starting_capital: 1000000
+total_rounds: 4
+starting_trust: 50
+
+client:
+  name: "Mrs. Nomsa Dlamini"
+  persona: >-
+    A 58-year-old recently retired deputy headteacher from Durban. She has saved
+    R1,000,000 over a long career and wants it to grow steadily to supplement her
+    pension — but she cannot afford a large loss this close to relying on it.
+  mandate:
+    summary: >-
+      Grow my capital steadily and protect me from big losses. Don't gamble
+      everything on one company, and always keep some cash on hand.
+    risk_tolerance: moderate
+    max_single_share_pct: 40
+    min_cash_pct: 10
+    guidance: >-
+      Rewards steady, diversified growth that beats the market. Penalises
+      concentration in a single share, running out of cash, and heavy losses.
+
+# --- The six listed companies, one per sector (SA flavour, all fictional) -----
+shares:
+  - id: KGM
+    name: "Kalahari Gold Mining"
+    sector: "Mining"
+    start_price: 100.00
+    rounds:
+      - price: 106.00
+        why: "Gold held firm on steady global safe-haven demand; Kalahari's output was on plan."
+      - price: 104.00
+        why: "A stronger rand after the SARB rate hike trimmed rand-gold prices slightly."
+      - price: 122.00
+        why: "A regional supply shock closed several competing shafts, tightening gold supply and lifting Kalahari sharply."
+      - price: 118.00
+        why: "Some profit-taking as supply fears eased, but the price held most of its gains."
+
+  - id: UFG
+    name: "Umzansi Financial Group"
+    sector: "Banking"
+    start_price: 100.00
+    rounds:
+      - price: 102.00
+        why: "Steady quarter for the bank; loan growth in line with expectations."
+      - price: 112.00
+        why: "The SARB repo-rate hike widened net interest margins — banks were the clear winners."
+      - price: 109.00
+        why: "Worries about credit impairments from mining-region borrowers pulled the price back a little."
+      - price: 114.00
+        why: "Resilient earnings and a solid dividend restored confidence."
+
+  - id: KFR
+    name: "Karoo Fresh Retail"
+    sector: "Food retail"
+    start_price: 100.00
+    rounds:
+      - price: 96.00
+        why: "Persistent load-shedding pushed up diesel-generator costs and squeezed store margins."
+      - price: 92.00
+        why: "The rate hike dented consumer spending; shoppers traded down and volumes fell."
+      - price: 95.00
+        why: "Defensive demand for groceries plus easing fuel costs steadied the business."
+      - price: 99.00
+        why: "Margin recovery as generator costs fell and private-label lines gained share."
+
+  - id: VLA
+    name: "Vula Telecom"
+    sector: "Telecoms"
+    start_price: 100.00
+    rounds:
+      - price: 103.00
+        why: "Data-demand growth lifted revenue; network uptime during outages won subscribers."
+      - price: 94.00
+        why: "As a capital-heavy growth stock, Vula fell hardest when rates rose and financing got dearer."
+      - price: 97.00
+        why: "The share stabilised as management reaffirmed its network-expansion plan."
+      - price: 106.00
+        why: "A strong rebound as rates plateaued and subscriber additions beat forecasts."
+
+  - id: CFL
+    name: "Cape Freight & Logistics"
+    sector: "Logistics"
+    start_price: 100.00
+    rounds:
+      - price: 101.00
+        why: "Steady freight volumes across the ports; nothing dramatic either way."
+      - price: 99.00
+        why: "Higher fuel and financing costs after the rate hike nibbled at margins."
+      - price: 90.00
+        why: "The mining supply shock disrupted bulk-freight corridors, cutting haulage volumes sharply."
+      - price: 97.00
+        why: "Corridors reopened and volumes recovered most of the lost ground."
+
+  - id: SUN
+    name: "Sunfield Renewables"
+    sector: "Renewable energy"
+    start_price: 100.00
+    rounds:
+      - price: 110.00
+        why: "Load-shedding drove a surge in demand for rooftop-solar and backup installations."
+      - price: 101.00
+        why: "Higher rates raised the financing cost of long-dated renewable projects, cooling the rally."
+      - price: 104.00
+        why: "New municipal supply contracts added a visible pipeline of future revenue."
+      - price: 112.00
+        why: "Strong order book and stabilising rates powered a fresh leg higher."
+
+# --- At most two scenario events; already baked into the price paths above. ---
+# They exist to drive the brief narrative and the results explanation, never to
+# trigger runtime randomness (plan R2, KTD4).
+events:
+  - id: sarb_repo_hike
+    round: 2
+    title: "SARB raises the repo rate by 50 basis points"
+    narrative: >-
+      The Reserve Bank surprised the market with a 50bp hike to tame inflation.
+      Banks gain from wider margins; rate-sensitive and capital-heavy sectors —
+      telecoms, renewables — and consumer spending at retailers come under pressure.
+    affected_shares: [UFG, VLA, SUN, KFR]
+
+  - id: mining_supply_shock
+    round: 3
+    title: "Regional mining supply shock"
+    narrative: >-
+      Safety stoppages and flooding closed several shafts across the region.
+      Tighter supply lifted gold sharply, but the disruption choked the
+      bulk-freight corridors that serve the mines.
+    affected_shares: [KGM, CFL]
+
+# --- Market briefs shown at the start of each round --------------------------
+briefs:
+  - round: 1
+    headline: "A jittery market under the lights"
+    body: >-
+      You take over Mrs. Dlamini's portfolio with the market in a cautious mood.
+      Load-shedding remains the backdrop to everything: it lifts demand for
+      renewable energy while raising costs for retailers. Commodity prices are
+      steady and the banks are ticking along. Read the sectors and place your
+      first allocation.
+    sector_news:
+      - "Load-shedding stays at Stage 4 most evenings — good for backup-power demand, hard on retail margins."
+      - "Gold is firm on global safe-haven flows."
+      - "Analysts see data demand underpinning telecoms."
+
+  - round: 2
+    headline: "Rates jump: the SARB moves"
+    body: >-
+      The Reserve Bank has hiked the repo rate by 50 basis points to fight
+      inflation. Banks stand to benefit from wider margins, while capital-heavy
+      sectors and consumer-facing retailers may feel the squeeze. Position the
+      portfolio for a higher-rate quarter.
+    sector_news:
+      - "SARB hikes 50bp — banks rally, growth stocks wobble."
+      - "Retailers warn that shoppers are trading down."
+      - "Renewable-project financing just got more expensive."
+
+  - round: 3
+    headline: "Supply shock hits the mines"
+    body: >-
+      Safety stoppages and flooding have closed several shafts across the region.
+      Gold has spiked on tighter supply — but the same disruption is choking the
+      freight corridors that serve the mines. One sector's windfall is another's
+      headache.
+    sector_news:
+      - "Gold spikes as regional shafts go offline."
+      - "Bulk-freight volumes slump on corridor disruption."
+      - "Banks watch mining-region loan books nervously."
+
+  - round: 4
+    headline: "Steadier ground"
+    body: >-
+      Rates appear to have plateaued and the supply disruption is easing.
+      Growth sectors are finding their feet again and the mines are stabilising.
+      This is your final quarter — finish Mrs. Dlamini's year strongly.
+    sector_news:
+      - "Rates seen on hold — telecoms and renewables rebound."
+      - "Freight corridors reopen; logistics volumes recover."
+      - "Gold holds most of its supply-driven gains."
+
+# --- Authored fallback content (used when the OpenAI API is unavailable) ------
+# Coaching keyed by outcome category: beat/trailed the benchmark x mandate
+# kept/breached (plan R6). AI never invents these; they are pre-approved.
+fallback:
+  feedback:
+    beat_kept: >-
+      Strong quarter. You beat the market benchmark while staying inside Mrs.
+      Dlamini's mandate — diversified, with cash on hand and no oversized bet.
+      That is exactly the disciplined growth she asked for. Keep reading the
+      sector signals the way you did here.
+    beat_breached: >-
+      You beat the benchmark this round — well done on the returns — but you did
+      it while breaking part of the client's mandate (too much in one share, or
+      too little cash). It worked this time, but it exposed Mrs. Dlamini to a
+      risk she explicitly asked you to avoid. Aim for the same return with a
+      safer shape.
+    trailed_kept: >-
+      You trailed the market this round, but you respected the client's mandate —
+      diversified and cautious. That discipline protects her from big losses.
+      Look again at the brief: which sector signal did the market reward that
+      your allocation under-weighted?
+    trailed_breached: >-
+      A tough round: you trailed the benchmark and stepped outside the mandate.
+      Concentration or too little cash amplified the miss. Rebuild around the
+      client's rules first — spread the risk, hold some cash — then use the
+      sector news to tilt toward what the quarter favours.
+  reflection_prompts:
+    - "Looking back at your first allocation, which sector signal in the brief did you trust most, and why?"
+    - "The Reserve Bank raised rates this quarter. How did that change your thinking about where to invest the client's money?"
+    - "The supply shock helped one sector and hurt another. How did you weigh that trade-off in your allocation?"
+    - "It's the final quarter. Across the whole year, what would you tell Mrs. Dlamini about how you managed her money?"

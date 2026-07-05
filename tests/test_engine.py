@@ -123,6 +123,18 @@ def test_trust_drifts_down_on_all_cash():
     assert trust_after < 50.0
 
 
+def test_trust_exact_value_for_breaching_trailing_losing_round():
+    # Round 2, 100% in VLA: VLA falls (94/103), the market falls less, and the
+    # mandate is broken (>40% single share, 0% cash). Hand-computed deltas:
+    #   trailed market -6, broke mandate -10, lost value -4  => -20 from 50 = 30.
+    r = engine.compute_round(PACK, 2, {"VLA": 100}, CAP, CAP)
+    trust_after, why = engine.update_trust(50.0, r, PACK)
+    assert trust_after == pytest.approx(30.0)
+    assert "broke the mandate" in why
+    assert "trailed the market" in why
+    assert "lost value" in why
+
+
 def test_trust_bounded_0_to_100():
     # Repeated disastrous rounds never go below 0.
     bad = engine.compute_round(PACK, 1, {"KGM": 100}, CAP, CAP)

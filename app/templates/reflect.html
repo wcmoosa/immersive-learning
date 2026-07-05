@@ -10,7 +10,9 @@
 </div>
 
 <form method="post" action="/run/reflect" class="card">
-  <div class="reflect-prompt">{{ prompt }}</div>
+  <div id="reflect-prompt" hx-get="/run/reflect/prompt" hx-trigger="load" hx-swap="innerHTML">
+    <div class="feedback-loading"><span class="spinner"></span> Preparing your reflection question…</div>
+  </div>
   <label class="stack-label">Your reflection
     <textarea name="reflection" rows="6" autofocus placeholder="Write a few sentences…">{{ existing.text if existing else '' }}</textarea>
   </label>

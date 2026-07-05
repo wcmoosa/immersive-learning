@@ -232,6 +232,9 @@ def test_each_step_page_renders(client):
 
     reflect = client.get("/run/reflect")
     assert reflect.status_code == 200 and "Reflect" in reflect.text
+    # The prompt loads via an htmx fragment (deferred so the page renders instantly).
+    prompt = client.get("/run/reflect/prompt")
+    assert prompt.status_code == 200 and prompt.text.strip()
 
 
 def test_allocate_preview_returns_live_total(client):

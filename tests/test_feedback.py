@@ -10,7 +10,7 @@ from app.content import load_content_pack
 PACK = load_content_pack()
 CAP = PACK.starting_capital
 DIVERSIFIED = {"KGM": 20, "UFG": 20, "KFR": 10, "VLA": 10, "CFL": 10, "SUN": 20, "CASH": 10}
-FORECAST = {"sectors": {"Mining": "up"}, "rationale": "Gold looks strong to me."}
+FORECAST = {"directions": {"KGM": "up"}, "rationale": "Gold looks strong to me."}
 RESULTS = engine.compute_round(PACK, 1, DIVERSIFIED, CAP, CAP)
 
 

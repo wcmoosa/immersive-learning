@@ -161,8 +161,8 @@ def finalize_run(session, run: Run, pack: ContentPack) -> None:
         reflection_component = 0.0
     reflection_why = f"Average engagement across {len(reflections)} reflections."
 
-    total_return = (run.final_value / pack.starting_capital - 1) if run.final_value else 0.0
-    bench_return = (run.benchmark_value / pack.starting_capital - 1) if run.benchmark_value else 0.0
+    total_return = (run.final_value / pack.starting_capital - 1) if run.final_value is not None else 0.0
+    bench_return = (run.benchmark_value / pack.starting_capital - 1) if run.benchmark_value is not None else 0.0
     outcome, outcome_why = outcome_score(total_return, bench_return)
 
     composite = composite_score(decision, reflection_component, outcome)

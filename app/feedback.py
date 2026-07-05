@@ -117,10 +117,10 @@ class FeedbackService(ABC):
         self.pack = pack
 
     @abstractmethod
-    def round_feedback(self, *, round_number: int, allocation: dict, forecast: dict, results: dict, history: list | None = None) -> FeedbackResult: ...
+    def round_feedback(self, *, round_number: int, allocation: dict, forecast: dict, results: dict) -> FeedbackResult: ...
 
     @abstractmethod
-    def reflection_prompt(self, *, round_number: int, results: dict, history: list | None = None) -> str: ...
+    def reflection_prompt(self, *, round_number: int, results: dict) -> str: ...
 
     @abstractmethod
     def rate_reflection(self, *, text: str) -> tuple[float, str]: ...
@@ -129,11 +129,11 @@ class FeedbackService(ABC):
 class CannedFeedbackService(FeedbackService):
     """Authored, deterministic content — the offline and fallback path."""
 
-    def round_feedback(self, *, round_number, allocation, forecast, results, history=None) -> FeedbackResult:
+    def round_feedback(self, *, round_number, allocation, forecast, results) -> FeedbackResult:
         category = outcome_category(results)
         return FeedbackResult(text=self.pack.fallback.feedback[category], source="canned")
 
-    def reflection_prompt(self, *, round_number, results, history=None) -> str:
+    def reflection_prompt(self, *, round_number, results) -> str:
         prompts = self.pack.fallback.reflection_prompts
         idx = min(round_number - 1, len(prompts) - 1)
         return prompts[idx]
@@ -168,7 +168,7 @@ class OpenAIFeedbackService(FeedbackService):
         )
         return (resp.choices[0].message.content or "").strip()
 
-    def round_feedback(self, *, round_number, allocation, forecast, results, history=None) -> FeedbackResult:
+    def round_feedback(self, *, round_number, allocation, forecast, results) -> FeedbackResult:
         user = _facts_block(round_number, allocation, forecast, results, self.pack)
         try:
             text = self._chat(_COACH_SYSTEM, user, max_tokens=220)
@@ -177,10 +177,10 @@ class OpenAIFeedbackService(FeedbackService):
         except Exception:
             pass
         return self._canned.round_feedback(
-            round_number=round_number, allocation=allocation, forecast=forecast, results=results, history=history
+            round_number=round_number, allocation=allocation, forecast=forecast, results=results
         )
 
-    def reflection_prompt(self, *, round_number, results, history=None) -> str:
+    def reflection_prompt(self, *, round_number, results) -> str:
         user = (
             f"Round {round_number} of {self.pack.total_rounds}. "
             f"Portfolio return {results['portfolio_return'] * 100:.1f}% vs "
@@ -194,7 +194,7 @@ class OpenAIFeedbackService(FeedbackService):
                 return text
         except Exception:
             pass
-        return self._canned.reflection_prompt(round_number=round_number, results=results, history=history)
+        return self._canned.reflection_prompt(round_number=round_number, results=results)
 
     def rate_reflection(self, *, text: str) -> tuple[float, str]:
         # Empty/near-empty reflections floor deterministically — never sent out.
@@ -217,8 +217,12 @@ def get_feedback_service(pack: ContentPack) -> FeedbackService:
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         return CannedFeedbackService(pack)
-    from openai import OpenAI
-
+    try:
+        from openai import OpenAI
+    except ImportError:
+        # A key is set but the SDK isn't installed — degrade to canned rather
+        # than crashing app startup (the fallback must always answer).
+        return CannedFeedbackService(pack)
     client = OpenAI(api_key=api_key, timeout=10.0, max_retries=1)
     model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
     return OpenAIFeedbackService(pack, client=client, model=model)

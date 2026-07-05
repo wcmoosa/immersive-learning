@@ -110,6 +110,9 @@ class Reflection(Base):
     round_number: Mapped[int] = mapped_column(Integer)
 
     text: Mapped[str] = mapped_column(Text, default="")
+    # The LLM/authored reflection question shown to the student (cached so it is
+    # generated once, not on every page load — see the reflect flow).
+    prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Deterministic engagement heuristic (enters composite).
     quality_score: Mapped[float | None] = mapped_column(Float, nullable=True)

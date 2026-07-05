@@ -7,6 +7,7 @@ scoring/leaderboard surface (U6), and full lecturer view (U7) extend this file.
 
 from __future__ import annotations
 
+import html
 import os
 from datetime import datetime, timezone
 
@@ -38,7 +39,6 @@ from app.models import (
     STEP_REFLECTION,
     STEP_RESULTS,
     STEP_SUMMARY,
-    TOTAL_ROUNDS,
     FeedbackRecord,
     Reflection,
     RoundDecision,
@@ -93,7 +93,12 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> Respon
         return templates.TemplateResponse(
             request, "forbidden.html", {}, status_code=403
         )
-    return HTMLResponse(f"<h1>{exc.status_code}</h1><p>{exc.detail}</p>", status_code=exc.status_code)
+    # Escape the detail defensively — no user input reaches it today, but this
+    # keeps the generic handler from becoming a reflected-XSS sink if it ever does.
+    return HTMLResponse(
+        f"<h1>{exc.status_code}</h1><p>{html.escape(str(exc.detail))}</p>",
+        status_code=exc.status_code,
+    )
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -290,22 +295,6 @@ def _journey(run: Run) -> list[dict]:
             }
         )
     return points
-
-
-def _history_for_feedback(run: Run, upto_round: int) -> list[dict]:
-    hist = []
-    for d in sorted(run.decisions, key=lambda x: x.round_number):
-        if d.round_number >= upto_round or not d.results:
-            continue
-        hist.append(
-            {
-                "round": d.round_number,
-                "portfolio_return": d.results.get("portfolio_return"),
-                "benchmark_return": d.results.get("benchmark_return"),
-                "beat_benchmark": d.results.get("beat_benchmark"),
-            }
-        )
-    return hist
 
 
 @app.post("/run/start")
@@ -599,7 +588,6 @@ def run_feedback_panel(
             allocation=decision.allocation or {},
             forecast=decision.forecast or {},
             results=decision.results,
-            history=_history_for_feedback(run, run.current_round),
         )
         record = FeedbackRecord(
             run_id=run.id,
@@ -640,18 +628,38 @@ def run_reflect(
         return _redirect("/dashboard")
     if (bounce := _guard_step(run, STEP_REFLECTION)) is not None:
         return bounce
-    decision = _decision_for(run, run.current_round)
-    prompt = FEEDBACK.reflection_prompt(
-        round_number=run.current_round,
-        results=decision.results if decision else {},
-        history=_history_for_feedback(run, run.current_round),
-    )
+    # The prompt is generated (and cached) by the htmx fragment below so the
+    # page renders instantly — a slow LLM call never blocks the reflect screen.
     existing = next((r for r in run.reflections if r.round_number == run.current_round), None)
     return templates.TemplateResponse(
         request,
         "reflect.html",
-        {"user": user, "run": run, "pack": PACK, "prompt": prompt, "existing": existing},
+        {"user": user, "run": run, "pack": PACK, "existing": existing},
     )
+
+
+@app.get("/run/reflect/prompt", response_class=HTMLResponse)
+def run_reflect_prompt(
+    request: Request,
+    user: User = Depends(require_role("student")),
+    session: Session = Depends(get_session),
+) -> Response:
+    """htmx fragment: generate the reflection question once and cache it."""
+    run = _current_run(session, user)
+    if run is None:
+        return HTMLResponse("")
+    decision = _decision_for(run, run.current_round)
+    reflection = next((r for r in run.reflections if r.round_number == run.current_round), None)
+    if reflection is None:
+        reflection = Reflection(run_id=run.id, round_number=run.current_round, text="")
+        session.add(reflection)
+    if not reflection.prompt:
+        reflection.prompt = FEEDBACK.reflection_prompt(
+            round_number=run.current_round,
+            results=decision.results if decision else {},
+        )
+        session.commit()
+    return templates.TemplateResponse(request, "_reflect_prompt.html", {"prompt": reflection.prompt})
 
 
 @app.post("/run/reflect")
@@ -677,7 +685,7 @@ async def run_reflect_submit(
     reflection.indicative_rating = indicative_rating
     reflection.indicative_why = indicative_why
 
-    if run.current_round < TOTAL_ROUNDS:
+    if run.current_round < PACK.total_rounds:
         run.current_round += 1
         run.current_step = STEP_BRIEFING
         session.commit()
@@ -687,7 +695,7 @@ async def run_reflect_submit(
     run.current_step = STEP_SUMMARY
     run.status = STATUS_COMPLETED
     run.completed_at = _now()
-    last = _decision_for(run, TOTAL_ROUNDS)
+    last = _decision_for(run, PACK.total_rounds)
     if last is not None:
         run.final_value = last.portfolio_value
         run.benchmark_value = last.benchmark_value

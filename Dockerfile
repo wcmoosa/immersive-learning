@@ -6,12 +6,17 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Install dependencies first for better layer caching. Copying the package
-# sources is required because the project builds an installable package.
+# Dependencies install from a vendored wheelhouse (see README) with no network
+# access. This keeps `docker compose up` fully offline and immune to DNS/PyPI
+# hiccups during a live demo (plan KTD2 offline posture, "demo cannot stall").
+# The app itself runs from /app (WORKDIR), so it need not be pip-installed —
+# installing the dependency wheels directly avoids needing a build backend.
+COPY wheelhouse ./wheelhouse
+RUN pip install --no-index --no-cache-dir ./wheelhouse/*.whl
+
 COPY pyproject.toml ./
 COPY app ./app
 COPY content ./content
-RUN pip install ".[dev]"
 
 COPY docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh

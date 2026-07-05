@@ -1,0 +1,11 @@
+{% set is_ok = ok if ok is defined else (total >= 99.99 and total <= 100.01) %}
+<div class="alloc-total {{ 'ok' if is_ok else 'bad' }}">
+  <span class="alloc-total-num">{{ "%.0f"|format(total) }}%</span>
+  <span class="alloc-total-msg">
+    {% if is_ok %}
+      Allocated in full — ready to submit.
+    {% else %}
+      {{ why if why is defined and why else "Allocations must total 100%." }}
+    {% endif %}
+  </span>
+</div>

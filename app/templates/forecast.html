@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% set active_step = 'forecast' %}
+{% block title %}Round {{ run.current_round }} forecast · Meridian Analyst{% endblock %}
+{% block content %}
+{% include "_progress.html" %}
+
+<div class="page-head">
+  <h1>Your forecast</h1>
+  <p class="muted">Call the direction you expect each sector to move this quarter, then explain your thinking. Your forecast is compared against how you actually invest.</p>
+</div>
+
+<form method="post" action="/run/forecast" class="card">
+  <div class="table-scroll">
+    <table class="forecast-table">
+      <thead><tr><th>Company / sector</th><th>Your call</th></tr></thead>
+      <tbody>
+        {% for share in pack.shares %}
+        {% set chosen = (prior.directions[share.id] if prior and prior.directions and share.id in prior.directions else 'flat') %}
+        <tr>
+          <td>{{ share.name }} <span class="muted">· {{ share.sector }}</span></td>
+          <td>
+            <div class="dir-pick">
+              {% for d, label in [('up','▲ Up'),('flat','▬ Flat'),('down','▼ Down')] %}
+              <label class="dir-opt dir-{{ d }}">
+                <input type="radio" name="forecast_{{ share.id }}" value="{{ d }}" {{ 'checked' if chosen == d else '' }}>
+                <span>{{ label }}</span>
+              </label>
+              {% endfor %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <label class="stack-label">Your rationale (one or two lines)
+    <textarea name="rationale" placeholder="e.g. Rates are rising, so I expect banks to gain and rate-sensitive sectors to lag.">{{ prior.rationale if prior and prior.rationale else '' }}</textarea>
+  </label>
+
+  <button class="btn btn-primary" type="submit">Continue to allocation →</button>
+</form>
+{% endblock %}

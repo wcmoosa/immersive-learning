@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% set active_step = 'reflect' %}
+{% block title %}Round {{ run.current_round }} reflection · Meridian Analyst{% endblock %}
+{% block content %}
+{% include "_progress.html" %}
+
+<div class="page-head">
+  <h1>Reflect</h1>
+  <p class="muted">A short reflection helps you learn from the round. There are no wrong answers — write what you were thinking.</p>
+</div>
+
+<form method="post" action="/run/reflect" class="card">
+  <div class="reflect-prompt">{{ prompt }}</div>
+  <label class="stack-label">Your reflection
+    <textarea name="reflection" rows="6" autofocus placeholder="Write a few sentences…">{{ existing.text if existing else '' }}</textarea>
+  </label>
+  <button class="btn btn-primary" type="submit">
+    {% if run.current_round < pack.total_rounds %}Submit &amp; start round {{ run.current_round + 1 }} →{% else %}Submit &amp; see your final summary →{% endif %}
+  </button>
+</form>
+{% endblock %}

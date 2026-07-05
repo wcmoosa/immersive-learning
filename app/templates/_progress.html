@@ -1,0 +1,9 @@
+<div class="run-progress">
+  <div class="run-round">Round <strong>{{ run.current_round }}</strong> <span class="of">of {{ pack.total_rounds }}</span></div>
+  <ol class="steps">
+    {% for key, label in [('brief','Brief'),('forecast','Forecast'),('allocate','Allocate'),('results','Results'),('reflect','Reflect')] %}
+    <li class="{{ 'active' if key == active_step else '' }}">{{ label }}</li>
+    {% endfor %}
+  </ol>
+  <div class="run-trust">Client trust <strong>{{ run.client_trust | round(0) | int }}</strong>/100</div>
+</div>

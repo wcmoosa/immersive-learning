@@ -242,3 +242,54 @@ def test_allocate_preview_returns_live_total(client):
     resp = client.post("/run/allocate/preview", data=VALID_ALLOC)
     assert resp.status_code == 200
     assert "100%" in resp.text
+
+
+def test_leaderboard_shows_completed_run(client):
+    login(client, "student")
+    client.post("/run/start")
+    for _ in range(4):
+        _play_one_round(client)
+    board = client.get("/leaderboard")
+    assert board.status_code == 200
+    assert "Demo Student" in board.text
+
+
+# =============================================================================
+# Lecturer dashboard (U7)
+# =============================================================================
+
+def test_lecturer_sees_cohort_and_drilldown(client):
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    # A student completes a full run.
+    login(client, "student")
+    client.post("/run/start")
+    for _ in range(4):
+        _play_one_round(client)
+    run_id = _run_id_for("student")
+
+    lecturer = TestClient(app)
+    login(lecturer, "lecturer")
+    board = lecturer.get("/lecturer")
+    assert board.status_code == 200
+    assert "Demo Student" in board.text
+    assert "Completed" in board.text
+
+    detail = lecturer.get(f"/lecturer/run/{run_id}")
+    assert detail.status_code == 200
+    assert "Round 1" in detail.text
+    assert "AI feedback" in detail.text  # feedback record shown
+    assert "Composite breakdown" in detail.text
+
+
+def test_student_cannot_access_lecturer_detail(client):
+    login(client, "student")
+    resp = client.get("/lecturer/run/1", follow_redirects=False)
+    assert resp.status_code == 403
+
+
+def test_lecturer_detail_missing_run_is_404(client):
+    login(client, "lecturer")
+    resp = client.get("/lecturer/run/99999", follow_redirects=False)
+    assert resp.status_code == 404

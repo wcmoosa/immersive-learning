@@ -105,6 +105,11 @@ th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size
 .down { color: var(--down); }
 tr.you { background: rgba(63, 182, 168, 0.12); }
 
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.82rem; }
+.badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.75rem; border: 1px solid var(--line); color: var(--muted); }
+.badge-done { border-color: var(--up); color: #baf5d3; background: rgba(46,204,113,.12); }
+.badge-active { border-color: var(--accent); color: #ffe0a3; background: rgba(240,165,0,.12); }
+
 .footsig { text-align: center; color: var(--muted); font-size: 0.78rem; padding: 1.5rem 1rem 2rem; border-top: 1px solid var(--line); margin-top: 1rem; }
 
 /* Run progress bar */

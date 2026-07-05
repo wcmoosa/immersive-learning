@@ -155,13 +155,62 @@ def dashboard(
 
 
 @app.get("/lecturer", response_class=HTMLResponse)
-def lecturer_landing(
+def lecturer_view(
     request: Request,
     user: User = Depends(require_role("lecturer")),
     session: Session = Depends(get_session),
 ) -> Response:
-    # Full cohort view is built in U7; this landing confirms the role gate works.
-    return templates.TemplateResponse(request, "lecturer.html", {"user": user, "rows": []})
+    """Read-only cohort overview: one row per student with their latest run."""
+    students = session.query(User).filter(User.role == "student").order_by(User.display_name).all()
+    rows = []
+    for student in students:
+        run = (
+            session.query(Run)
+            .filter(Run.user_id == student.id)
+            .order_by(Run.started_at.desc())
+            .first()
+        )
+        rows.append(
+            {
+                "name": student.display_name,
+                "username": student.username,
+                "run_id": run.id if run else None,
+                "status": run.status if run else "not started",
+                "current_round": run.current_round if run else None,
+                "composite": run.composite_score if run else None,
+                "trust": run.client_trust if run else None,
+            }
+        )
+    return templates.TemplateResponse(request, "lecturer.html", {"user": user, "rows": rows, "pack": PACK})
+
+
+@app.get("/lecturer/run/{run_id}", response_class=HTMLResponse)
+def lecturer_run_detail(
+    request: Request,
+    run_id: int,
+    user: User = Depends(require_role("lecturer")),
+    session: Session = Depends(get_session),
+) -> Response:
+    """Per-student drill-down: decisions, reflections, and AI feedback records."""
+    run = session.get(Run, run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+    student = session.get(User, run.user_id)
+    reflections = {r.round_number: r for r in run.reflections}
+    feedback_by_round = {f.round_number: f for f in run.feedback}
+    return templates.TemplateResponse(
+        request,
+        "lecturer_detail.html",
+        {
+            "user": user,
+            "student": student,
+            "run": run,
+            "pack": PACK,
+            "journey": _journey(run),
+            "reflections": reflections,
+            "feedback_by_round": feedback_by_round,
+        },
+    )
 
 
 @app.get("/healthz")

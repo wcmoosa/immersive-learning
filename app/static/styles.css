@@ -103,6 +103,7 @@ th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size
 
 .up { color: var(--up); }
 .down { color: var(--down); }
+tr.you { background: rgba(63, 182, 168, 0.12); }
 
 .footsig { text-align: center; color: var(--muted); font-size: 0.78rem; padding: 1.5rem 1rem 2rem; border-top: 1px solid var(--line); margin-top: 1rem; }
 

@@ -649,12 +649,26 @@ async def run_reflect_submit(
 
 
 def _finalize_run(session: Session, run: Run) -> None:
-    """Compute composite scoring at completion. Wired by U6; a no-op until then."""
-    try:
-        from app import scoring
-    except ImportError:
-        return
-    scoring.finalize_run(run, PACK)
+    """Compute composite scoring at completion (U6)."""
+    from app import scoring
+
+    scoring.finalize_run(session, run, PACK)
+
+
+@app.get("/leaderboard", response_class=HTMLResponse)
+def leaderboard(
+    request: Request,
+    user: User = Depends(require_user),
+    session: Session = Depends(get_session),
+) -> Response:
+    from app import scoring
+
+    rows = scoring.leaderboard(session)
+    return templates.TemplateResponse(
+        request,
+        "leaderboard.html",
+        {"user": user, "rows": rows, "pack": PACK},
+    )
 
 
 @app.get("/run/{run_id}/summary", response_class=HTMLResponse)

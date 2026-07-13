@@ -28,6 +28,10 @@ DEMO_STUDENTS = [
     ("aisha", "Aisha Patel"),
     ("student", "Demo Student"),
 ]
+# Per-tester accounts for a live testing session — each concurrent tester needs
+# their own account (a shared account means a shared Run and colliding state).
+# One playthrough per account, so reset the DB between test groups.
+DEMO_STUDENTS += [(f"student{n}", f"Tester {n:02d}") for n in range(1, 11)]
 LECTURERS = [
     ("lecturer", "Dr. Naledi Khumalo"),
 ]

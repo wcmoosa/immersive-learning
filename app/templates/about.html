@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}About · Meridian Analyst{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>About this simulation</h1>
+  <p class="muted">
+    Meridian Analyst is a showcase MVP of AI-supported immersive learning, built
+    for the Silverse × Regent Business School pilot. A student manages
+    {{ pack.currency }}{{ pack.starting_capital | int }} of a client's money across a
+    fictional South African share market over {{ pack.total_rounds }} quarterly
+    rounds: read the brief, forecast, allocate, see explainable results, get live
+    AI coaching, reflect, repeat.
+  </p>
+</div>
+
+<div class="card">
+  <h2>How it's set up</h2>
+  <p>
+    The whole app is one small FastAPI service rendering server-side Jinja pages,
+    with htmx for the live fragments (allocation totals, AI coaching, the lecturer
+    cohort view) and a single SQLite file for state. It runs with one command —
+    <code>docker compose up --build</code> — and serves on
+    <strong>http://localhost:8010</strong> (host <code>8010</code> maps to the
+    container's internal <code>8100</code>).
+  </p>
+  <ul>
+    <li><strong>Offline by design.</strong> Dependencies install from a vendored
+      wheelhouse and the frontend libraries (htmx, Chart.js) are vendored too, so
+      a build and a demo never depend on the network — no PyPI, CDN, or DNS
+      hiccup can stall a live session.</li>
+    <li><strong>Self-seeding.</strong> On first boot the database creates demo
+      accounts plus a fictional completed cohort, so the leaderboard and lecturer
+      view look alive before the first live playthrough. A presenter runs
+      <code>python -m app.seed reset</code> to restore clean state between groups.</li>
+    <li><strong>Cookie-session auth.</strong> A signed cookie carries the logged-in
+      user; each browser/device is an independent session, which is what lets many
+      testers play at once through a single shared URL.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>Variables &amp; key decisions</h2>
+  <p class="muted">Everything worth tuning is an environment variable or lives in the content pack — the code rarely needs to change.</p>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>Variable</th><th>Default</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>OPENAI_API_KEY</code></td><td><em>unset → fallback mode</em></td><td>Enables live AI coaching. Absent, the app uses authored content.</td></tr>
+        <tr><td><code>OPENAI_MODEL</code></td><td><code>gpt-4o-mini</code></td><td>Chat model for coaching, reflection prompts, and the indicative reflection rating.</td></tr>
+        <tr><td><code>CONTENT_PACK</code></td><td><code>content/scenario_meridian.yaml</code></td><td>The authored scenario — market, shares, client mandate, briefs, and fallback text.</td></tr>
+        <tr><td><code>DATABASE_URL</code></td><td><code>sqlite:////app/data/app.db</code></td><td>Where state lives; swappable for Postgres without touching app logic.</td></tr>
+        <tr><td><code>SESSION_SECRET</code></td><td><em>dev placeholder</em></td><td>Signs the session cookie. Set a stable value so restarts don't drop logins.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>Decisions that shape the experience</h3>
+  <ul>
+    <li><strong>Outcomes are deterministic and explainable.</strong> A pure
+      simulation engine computes every price move and score, and each carries a
+      plain-language "why". The AI never invents an outcome or a number.</li>
+    <li><strong>The AI coaches; it never grades.</strong> The system prompts
+      forbid stating or changing any score, and every score in the app comes from
+      the deterministic model. Coaching is grounded strictly in the student's own
+      decisions and the rule-based results.</li>
+    <li><strong>The demo can't stall.</strong> Live AI calls have a 10-second
+      timeout with one retry, then fall back to authored, pre-approved content —
+      so a slow or absent API is invisible to the student.</li>
+    <li><strong>Student free text is treated as data.</strong> Reflections and
+      rationales are wrapped in a delimited block with a treat-as-data
+      instruction, so a "rate this 100" can't steer the model.</li>
+    <li><strong>Deliberately throwaway.</strong> Shared credentials, no password
+      hashing, one SQLite file — good enough to prove the value of the pilot
+      without carrying the pilot's engineering obligations.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>Making it flexible: more simulations, richer AI feedback</h2>
+  <p>
+    The architecture already separates <em>what the simulation is</em> (the
+    content pack) from <em>how it runs</em> (the engine, scoring, and feedback
+    services). That separation is the growth path.
+  </p>
+
+  <h3>1. A library of simulations, not one market</h3>
+  <p>
+    A scenario is a single validated YAML file: title, currency, starting capital,
+    number of rounds, a client and mandate, a set of shares with per-round prices
+    and rationales, market briefs, and authored fallback text. Point
+    <code>CONTENT_PACK</code> at a different file and you have a different
+    simulation — no code change. From here we can:
+  </p>
+  <ul>
+    <li>Author a <strong>catalogue of scenarios</strong> (a volatile market, a
+      recession quarter, an ESG-tilted mandate, a bond-heavy conservative client)
+      and let a lecturer assign one per cohort.</li>
+    <li>Vary <strong>length and difficulty</strong> — more rounds, more shares and
+      sectors, tighter mandates — all from the pack, since the engine validates
+      and adapts to whatever the pack declares.</li>
+    <li>Generalise beyond finance. The same forecast → decide → explainable-result
+      → reflect loop fits operations, marketing spend, supply-chain, or public-sector
+      budgeting cases; only the content and the scoring weights change.</li>
+    <li>Add a lightweight <strong>authoring/validation UI</strong> so subject-matter
+      experts write packs without editing YAML by hand — the loader already fails
+      loudly on malformed content, which is the hard half of that feature.</li>
+  </ul>
+
+  <h3>2. Deeper AI feedback</h3>
+  <p>
+    Feedback lives behind one small interface (<code>round_feedback</code>,
+    <code>reflection_prompt</code>, <code>rate_reflection</code>) with an
+    authored fallback always behind it. That makes richer coaching a
+    contained change:
+  </p>
+  <ul>
+    <li><strong>History-aware coaching.</strong> Today each round is coached on its
+      own facts. Feeding the student's full trajectory (trust trend, repeated
+      mistakes, whether they act on prior advice) lets the coach notice patterns
+      and growth across the whole run.</li>
+    <li><strong>Per-share and forecast-vs-outcome tutoring</strong> — call out
+      exactly where a forecast diverged from what happened and why, tied to the
+      deterministic "why" each price already carries.</li>
+    <li><strong>Adaptive difficulty and Socratic depth.</strong> Use the
+      indicative reflection rating to decide when to probe harder or offer a hint,
+      nudging without ever touching the score.</li>
+    <li><strong>Richer, still-safe grounding.</strong> The grounding + treat-as-data
+      + always-fallback pattern generalises — new prompts can pull in more context
+      while keeping the guarantees that outcomes stay deterministic and the AI
+      never grades.</li>
+    <li><strong>Multi-turn debrief.</strong> A short back-and-forth at the end of a
+      run, letting the student ask the coach "what should I have done in round 2?"
+      grounded in their real decisions.</li>
+  </ul>
+
+  <h3>3. Scaling the platform</h3>
+  <p>
+    For a real cohort the same shape scales cleanly: swap SQLite for Postgres via
+    <code>DATABASE_URL</code>, add real accounts and roles, and cache or queue AI
+    calls. None of that touches the simulation logic — which is the point of
+    keeping content, rules, scoring, and coaching as separate, swappable pieces.
+  </p>
+</div>
+
+<p class="muted">
+  Synthetic market — not investment advice. All companies, prices, events, and
+  the client are fictional.
+</p>
+{% endblock %}

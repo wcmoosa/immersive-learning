@@ -2,9 +2,10 @@ services:
   app:
     build: .
     ports:
-      # Host 8010 -> container 8000. Host 8000 is often busy with other local
-      # apps; open http://localhost:8010 for the demo.
-      - "8010:8000"
+      # Host 8010 -> container 8100. The container's internal port is 8100 to
+      # avoid clashing with other app containers that use 8000; open
+      # http://localhost:8010 for the demo.
+      - "8010:8100"
     # Secrets (OpenAI key, session secret) live in a gitignored .env — never in
     # this file. The demo runs without it (AI feedback falls back to authored
     # content), so .env is optional.

@@ -27,8 +27,9 @@ docker compose up --build
 Then open **http://localhost:8010**. The database is seeded automatically on
 first boot (demo accounts + a fictional cohort for the leaderboard).
 
-> Host port **8010** maps to the container's 8000 — chosen to avoid clashing
-> with other local apps that commonly use 8000.
+> Host port **8010** maps to the container's internal port **8100** — the
+> internal port was moved off 8000 to avoid clashing with other app containers
+> that use 8000.
 
 ### Demo accounts
 

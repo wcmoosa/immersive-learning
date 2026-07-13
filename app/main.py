@@ -218,6 +218,15 @@ def lecturer_run_detail(
     )
 
 
+@app.get("/about", response_class=HTMLResponse)
+def about(
+    request: Request,
+    user: User | None = Depends(get_current_user),
+) -> Response:
+    """Public explainer: setup, variables/decisions, and the flexibility roadmap."""
+    return templates.TemplateResponse(request, "about.html", {"user": user, "pack": PACK})
+
+
 @app.get("/healthz")
 def healthz() -> dict:
     return {"status": "ok"}

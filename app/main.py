@@ -18,6 +18,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
+from app import badges as badges_mod
 from app import engine
 from app.auth import (
     authenticate,
@@ -216,6 +217,7 @@ def lecturer_run_detail(
             "feedback_by_round": feedback_by_round,
         },
     )
+
 
 
 @app.get("/about", response_class=HTMLResponse)
@@ -540,6 +542,16 @@ async def run_allocate_submit(
     decision.trust_after = trust_after
 
     run.client_trust = trust_after
+    # Credentials are awarded by rule, here, from the results the engine just
+    # computed — before any AI is involved (U9). The citation comes later.
+    badges_mod.award_round_badges(
+        run,
+        round_number=run.current_round,
+        allocation=allocation,
+        forecast=decision.forecast or {},
+        results=results,
+        pack=PACK,
+    )
     run.current_step = STEP_RESULTS
     session.commit()
     return _redirect("/run/results")
@@ -568,6 +580,7 @@ def run_results(
             "results": decision.results,
             "journey": _journey(run),
             "trust_delta": (decision.trust_after or 0) - (decision.trust_before or 0),
+            "round_badges": badges_mod.badges_for_round(run, run.current_round),
         },
     )
 
@@ -715,10 +728,16 @@ async def run_reflect_submit(
 
 
 def _finalize_run(session: Session, run: Run) -> None:
-    """Compute composite scoring at completion (U6)."""
+    """Compute composite scoring (U6) and award the run-scope credentials (U9)."""
     from app import scoring
 
     scoring.finalize_run(session, run, PACK)
+    badges_mod.award_run_badges(
+        run,
+        decisions=sorted(run.decisions, key=lambda d: d.round_number),
+        reflections=sorted(run.reflections, key=lambda r: r.round_number),
+        pack=PACK,
+    )
 
 
 @app.get("/leaderboard", response_class=HTMLResponse)
@@ -735,6 +754,45 @@ def leaderboard(
         "leaderboard.html",
         {"user": user, "rows": rows, "pack": PACK},
     )
+
+
+@app.get("/run/{run_id}/badges", response_class=HTMLResponse)
+def run_badges_panel(
+    request: Request,
+    run_id: int,
+    round: int | None = None,
+    user: User = Depends(require_role("student")),
+    session: Session = Depends(get_session),
+) -> Response:
+    """htmx panel: write (and cache) the citation for each earned credential.
+
+    The badges themselves were already awarded by rule and are rendered
+    immediately by the page. This fragment only fills in the *words*, so a slow
+    or absent LLM can delay a citation but can never delay — or change — an
+    award.
+    """
+    run = _owned_run(session, user, run_id)
+    earned = badges_mod.badges_for_round(run, round) if round is not None else list(run.badges or [])
+    if not earned:
+        return HTMLResponse("")
+
+    dirty = False
+    for badge in earned:
+        if badge.get("citation"):
+            continue
+        result = FEEDBACK.badge_citation(
+            badge_id=badge["id"], badge_name=badge["name"], badge_why=badge["why"]
+        )
+        badges_mod.set_citation(run, badge["id"], result.text, result.source)
+        dirty = True
+    if dirty:
+        session.commit()
+        earned = (
+            badges_mod.badges_for_round(run, round)
+            if round is not None
+            else list(run.badges or [])
+        )
+    return templates.TemplateResponse(request, "_badges_panel.html", {"badges": earned})
 
 
 @app.get("/run/{run_id}/summary", response_class=HTMLResponse)
@@ -757,5 +815,7 @@ def run_summary(
             "journey": _journey(run),
             "reflections": reflections,
             "feedback_by_round": feedback_by_round,
+            "badge_catalog": badges_mod.CATALOG,
+            "earned_badge_ids": badges_mod.earned_ids(run),
         },
     )

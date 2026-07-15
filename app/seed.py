@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 import sys
 
-from sqlalchemy import inspect
+from sqlalchemy import inspect, text
 
 from app.db import Base, DATABASE_URL, SessionLocal, engine
 from app.models import User
@@ -68,9 +68,29 @@ def seed_users(session) -> int:
     return created
 
 
+# Columns added after the first release. ``create_all`` only creates *missing
+# tables*, so a presenter with an existing volume would otherwise hit a hard
+# "no such column" error mid-demo. Additive, idempotent, and cheap.
+_ADDED_COLUMNS = [("runs", "badges", "JSON")]
+
+
+def _add_missing_columns() -> None:
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for table, column, coltype in _ADDED_COLUMNS:
+            if not inspector.has_table(table):
+                continue
+            existing = {c["name"] for c in inspector.get_columns(table)}
+            if column in existing:
+                continue
+            conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {coltype}"))
+            print(f"  migrated: added {table}.{column}")
+
+
 def create_all() -> None:
     _ensure_data_dir()
     Base.metadata.create_all(engine)
+    _add_missing_columns()
 
 
 def cmd_seed() -> None:

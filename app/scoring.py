@@ -221,6 +221,7 @@ def leaderboard(session) -> list[dict]:
                 "composite": run.composite_score,
                 "final_value": run.final_value,
                 "trust": run.client_trust,
+                "badges": list(run.badges or []),
             }
         )
     return rows

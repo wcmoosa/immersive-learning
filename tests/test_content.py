@@ -9,7 +9,7 @@ import tempfile
 import pytest
 import yaml
 
-from app.content import ContentError, load_content_pack
+from app.content import BADGE_IDS, ContentError, load_content_pack
 
 # A minimal-but-valid pack used to probe validation error paths.
 VALID_RAW = {
@@ -59,6 +59,7 @@ VALID_RAW = {
             "trailed_breached": "d",
         },
         "reflection_prompts": ["p1", "p2"],
+        "badge_citations": {badge_id: f"citation for {badge_id}" for badge_id in BADGE_IDS},
     },
 }
 
@@ -137,6 +138,14 @@ def test_missing_fallback_category_fails():
     with pytest.raises(ContentError) as exc:
         _load_from(raw)
     assert "beat_kept" in str(exc.value)
+
+
+def test_missing_badge_citation_fails():
+    raw = copy.deepcopy(VALID_RAW)
+    del raw["fallback"]["badge_citations"]["mandate_keeper"]
+    with pytest.raises(ContentError) as exc:
+        _load_from(raw)
+    assert "mandate_keeper" in str(exc.value)
 
 
 def test_missing_brief_for_a_round_fails():

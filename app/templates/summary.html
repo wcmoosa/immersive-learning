@@ -61,6 +61,43 @@
 </div>
 {% endif %}
 
+<div class="card badge-card">
+  <h2>Your analyst credentials</h2>
+  <p class="muted">
+    Earned {{ run.badges | length }} of {{ badge_catalog | length }}. Each one is awarded by a
+    transparent rule over your own decisions — never by the AI, and never part of your score.
+  </p>
+
+  {% if run.badges %}
+  <div id="badge-panel" hx-get="/run/{{ run.id }}/badges" hx-trigger="load" hx-swap="innerHTML">
+    <div class="badge-awards">
+      {% for b in run.badges %}
+      <div class="badge-award">
+        <span class="badge-icon">{{ b.icon }}</span>
+        <div class="badge-body">
+          <div class="badge-name">{{ b.name }}{% if b.round %}<span class="badge-round">Round {{ b.round }}</span>{% endif %}</div>
+          <p class="badge-why">{{ b.why }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="feedback-source muted"><span class="spinner"></span> The desk is writing up your citations…</p>
+  </div>
+  {% else %}
+  <p>No credentials this year — the rules below are the ones to aim for next time.</p>
+  {% endif %}
+
+  {% set missed = badge_catalog | rejectattr('id', 'in', earned_badge_ids) | list %}
+  {% if missed %}
+  <div class="badge-locked">
+    <span class="recap-tag">Still to earn</span>
+    <div class="alloc-summary">
+      {% for b in missed %}<span class="chip chip-locked" title="{{ b.blurb }}">{{ b.icon }} {{ b.name }}</span>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
 <h2 class="section-title">Round by round</h2>
 {% for p in journey %}
 {% set r = p.results %}

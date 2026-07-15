@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from app import badges as badges_mod
 from app import engine, scoring
 from app.content import load_content_pack
 from app.feedback import CannedFeedbackService
@@ -159,6 +160,11 @@ def _simulate_run(session, user: User, allocations: list[dict], reflections: lis
         fb = canned.round_feedback(round_number=r, allocation=allocation, forecast=forecast, results=results)
         session.add(FeedbackRecord(run_id=run.id, round_number=r, text=fb.text, source=fb.source))
 
+        badges_mod.award_round_badges(
+            run, round_number=r, allocation=allocation, forecast=forecast,
+            results=results, pack=_PACK,
+        )
+
         text = reflections[r - 1]
         indic, indic_why = canned.rate_reflection(text=text)
         session.add(
@@ -173,6 +179,20 @@ def _simulate_run(session, user: User, allocations: list[dict], reflections: lis
     run.benchmark_value = benchmark
     session.flush()
     scoring.finalize_run(session, run, _PACK)
+
+    badges_mod.award_run_badges(
+        run,
+        decisions=sorted(run.decisions, key=lambda d: d.round_number),
+        reflections=sorted(run.reflections, key=lambda r: r.round_number),
+        pack=_PACK,
+    )
+    # Citations for the seeded cohort come from the authored pack, never a live
+    # API call — seeding must work offline and produce identical data every time.
+    for badge in list(run.badges or []):
+        citation = canned.badge_citation(
+            badge_id=badge["id"], badge_name=badge["name"], badge_why=badge["why"]
+        )
+        badges_mod.set_citation(run, badge["id"], citation.text, citation.source)
     return run
 
 

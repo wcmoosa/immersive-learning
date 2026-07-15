@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard · Meridian Analyst{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Class leaderboard</h1>
+  <p class="muted">Ranked by composite performance — decisions and reasoning, not just returns.</p>
+</div>
+
+<div class="card">
+  {% if rows %}
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Analyst</th><th>Credentials</th><th>Composite</th><th>Final value</th><th>Client trust</th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="{{ 'you' if row.user_id == user.id else '' }}">
+          <td>{{ row.rank }}</td>
+          <td>{{ row.name }}{% if row.user_id == user.id %} <span class="role-chip">you</span>{% endif %}</td>
+          <td class="trophy-case">
+            {% for b in row.badges %}<span class="trophy" title="{{ b.name }} — {{ b.why }}">{{ b.icon }}</span>{% else %}<span class="muted">—</span>{% endfor %}
+          </td>
+          <td><strong>{{ row.composite | round(0) | int }}</strong>/100</td>
+          <td>{{ row.final_value | zar }}</td>
+          <td>{{ row.trust | round(0) | int }}/100</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted">No completed runs yet — be the first to finish!</p>
+  {% endif %}
+  <div class="btn-row"><a class="btn btn-ghost" href="/dashboard">Back to your desk</a></div>
+</div>
+{% endblock %}

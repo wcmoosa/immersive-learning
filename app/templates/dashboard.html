@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Meridian Analyst{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Your desk</h1>
+  <p class="muted">You are a junior investment analyst. Read the market, forecast, and invest your client's money over four quarters.</p>
+</div>
+
+<div class="card">
+  {% if run is none %}
+    <h2>Ready to take on a client?</h2>
+    <p>You'll manage <strong>R1,000,000</strong> of a client's capital across four quarterly rounds on the Meridian Exchange.</p>
+    <form method="post" action="/run/start">
+      <button class="btn btn-primary" type="submit">Start simulation</button>
+    </form>
+  {% elif completed %}
+    <h2>Run complete</h2>
+    <p>You finished all four rounds. Review your performance or see where you rank.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/run/{{ run.id }}/summary">View final summary</a>
+      <a class="btn btn-ghost" href="/leaderboard">Leaderboard</a>
+    </div>
+  {% else %}
+    <h2>Resume your run</h2>
+    <p>You're on <strong>Round {{ run.current_round }} of 4</strong>. Client trust is at
+      <strong>{{ run.client_trust | round(0) | int }}/100</strong>.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/run/play">Resume round {{ run.current_round }}</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% set active_step = 'allocate' %}
+{% block title %}Round {{ run.current_round }} allocation · Meridian Analyst{% endblock %}
+{% block content %}
+{% include "_progress.html" %}
+
+<div class="page-head">
+  <h1>Allocate the portfolio</h1>
+  <p class="muted">You are investing <strong>{{ start_value | zar }}</strong> of {{ pack.client.name }}'s capital this quarter. Split it across the shares and cash — the percentages must total 100%.</p>
+</div>
+
+<div class="card mandate-card">
+  <strong>Client mandate:</strong> {{ mandate.summary }}
+  <span class="mandate-rules">Max {{ mandate.max_single_share_pct|round(0)|int }}% in any one share · at least {{ mandate.min_cash_pct|round(0)|int }}% in cash</span>
+</div>
+
+{% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+
+<form id="alloc-form" method="post" action="/run/allocate" class="card">
+  <div hx-post="/run/allocate/preview" hx-trigger="input changed delay:200ms" hx-target="#alloc-total" hx-include="#alloc-form" hx-swap="innerHTML">
+    <div class="table-scroll">
+      <table class="alloc-table">
+        <thead><tr><th>Holding</th><th>Sector</th><th>Allocation %</th></tr></thead>
+        <tbody>
+          {% for share in pack.shares %}
+          <tr>
+            <td>{{ share.name }} <span class="ticker">{{ share.id }}</span></td>
+            <td>{{ share.sector }}</td>
+            <td><input type="number" name="{{ share.id }}" min="0" max="100" step="1"
+                       value="{{ prior_alloc[share.id]|round(0)|int if prior_alloc and share.id in prior_alloc else 0 }}"></td>
+          </tr>
+          {% endfor %}
+          <tr class="cash-row">
+            <td><strong>Cash</strong></td>
+            <td>Uninvested</td>
+            <td><input type="number" name="CASH" min="0" max="100" step="1"
+                       value="{{ prior_alloc['CASH']|round(0)|int if prior_alloc and 'CASH' in prior_alloc else 0 }}"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% set total = (prior_alloc.values()|sum) if prior_alloc else 0 %}
+  <div id="alloc-total">{% include "_alloc_total.html" with context %}</div>
+
+  <button class="btn btn-primary" type="submit">Lock in allocation &amp; see results →</button>
+</form>
+
+<script>
+  // Progressive enhancement: keep a live sum even before htmx responds.
+  (function () {
+    var form = document.getElementById('alloc-form');
+    if (!form) return;
+    function sum() {
+      var t = 0;
+      form.querySelectorAll('input[type=number]').forEach(function (i) { t += parseFloat(i.value || 0); });
+      return t;
+    }
+    form.addEventListener('input', function () {
+      var el = document.querySelector('.alloc-total-num');
+      if (el) el.textContent = Math.round(sum()) + '%';
+    });
+  })();
+</script>
+{% endblock %}

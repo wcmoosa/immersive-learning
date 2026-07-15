@@ -1,0 +1,10 @@
+<div class="feedback-body">
+  <p>{{ feedback.text }}</p>
+  <p class="feedback-source muted">
+    {% if feedback.source == 'openai' %}
+      Live coaching generated for your decisions · AI writes the words, never your score.
+    {% else %}
+      Coaching from your advisor · rule-based and pre-approved.
+    {% endif %}
+  </p>
+</div>

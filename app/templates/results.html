@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% set active_step = 'results' %}
+{% block title %}Round {{ run.current_round }} results · Meridian Analyst{% endblock %}
+{% block head %}<script src="/static/chart.umd.min.js"></script>{% endblock %}
+{% block content %}
+{% include "_progress.html" %}
+
+<div class="page-head">
+  <h1>Round {{ run.current_round }} results</h1>
+  <p class="muted">Every move below is authored and explained — the outcome engine is rule-based, not AI-generated.</p>
+</div>
+
+<div class="results-grid">
+  <div class="card stat">
+    <div class="stat-label">Your portfolio</div>
+    <div class="stat-num {{ 'up' if results.portfolio_return >= 0 else 'down' }}">{{ results.portfolio_return | pct }}</div>
+    <div class="stat-sub">{{ results.start_value | zar }} → {{ results.end_value | zar }}</div>
+  </div>
+  <div class="card stat">
+    <div class="stat-label">Market benchmark</div>
+    <div class="stat-num {{ 'up' if results.benchmark_return >= 0 else 'down' }}">{{ results.benchmark_return | pct }}</div>
+    <div class="stat-sub">{{ "Beat the market" if results.beat_benchmark else "Trailed the market" }}</div>
+  </div>
+  <div class="card stat">
+    <div class="stat-label">Client trust</div>
+    <div class="stat-num">{{ run.client_trust | round(0) | int }}<span class="stat-den">/100</span></div>
+    <div class="stat-sub {{ 'up' if trust_delta >= 0 else 'down' }}">{{ "%+.0f"|format(trust_delta) }} this round</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="trust-gauge">
+    {% set t = run.client_trust %}
+    <div class="gauge-track">
+      <div class="gauge-fill {{ 'g-low' if t < 34 else ('g-mid' if t < 67 else 'g-high') }}" style="width: {{ t }}%;"></div>
+    </div>
+    <p class="muted">{{ results.trust_why }}</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Portfolio vs benchmark</h2>
+  <div class="chart-wrap"><canvas id="journeyChart" height="220"></canvas></div>
+</div>
+
+{% if results.events %}
+<div class="card event-card">
+  {% for e in results.events %}<h2>{{ e.title }}</h2><p>{{ e.narrative }}</p>{% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>How each holding moved</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Company</th><th>Your weight</th><th>Move</th><th>Value change</th><th>Why</th></tr></thead>
+      <tbody>
+        {% for s in results.per_share | sort(attribute='weight_pct', reverse=true) %}
+        <tr>
+          <td>{{ s.name }} <span class="ticker">{{ s.id }}</span></td>
+          <td>{{ s.weight_pct | round(0) | int }}%</td>
+          <td class="{{ 'up' if s.share_return >= 0 else 'down' }}">{{ s.share_return | pct }}</td>
+          <td class="{{ 'up' if s.change >= 0 else 'down' }}">{% if s.weight_pct %}R{{ s.change | signed }}{% else %}—{% endif %}</td>
+          <td class="why-cell">{{ s.why }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if round_badges %}
+<div class="card badge-card">
+  <h2>Credentials earned this round</h2>
+  <p class="muted">Awarded by rule the moment your results were computed. The desk is writing up the citations.</p>
+  <div id="badge-panel" hx-get="/run/{{ run.id }}/badges?round={{ run.current_round }}" hx-trigger="load" hx-swap="innerHTML">
+    <div class="badge-awards">
+      {% for b in round_badges %}
+      <div class="badge-award">
+        <span class="badge-icon">{{ b.icon }}</span>
+        <div class="badge-body">
+          <div class="badge-name">{{ b.name }}</div>
+          <p class="badge-why">{{ b.why }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="feedback-source muted"><span class="spinner"></span> The desk is writing up your citation…</p>
+  </div>
+</div>
+{% endif %}
+
+<div class="card feedback-card">
+  <h2>Your advisor's feedback</h2>
+  <div id="feedback-panel" hx-get="/run/feedback" hx-trigger="load" hx-swap="innerHTML">
+    <div class="feedback-loading">
+      <span class="spinner"></span> Your senior advisor is reviewing your decisions…
+    </div>
+  </div>
+</div>
+
+<form method="post" action="/run/results">
+  <button class="btn btn-primary" type="submit">Continue to reflection →</button>
+</form>
+
+<script>
+  (function () {
+    var journey = {{ journey | tojson }};
+    var startCap = {{ pack.starting_capital }};
+    var labels = ['Start'];
+    var pf = [startCap];
+    var bm = [startCap];
+    journey.forEach(function (p) {
+      labels.push('R' + p.round);
+      pf.push(p.portfolio_value);
+      bm.push(p.benchmark_value);
+    });
+    var ctx = document.getElementById('journeyChart');
+    if (ctx && window.Chart) {
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Your portfolio', data: pf, borderColor: '#3fb6a8', backgroundColor: 'rgba(63,182,168,.15)', tension: .25, fill: true },
+            { label: 'Benchmark', data: bm, borderColor: '#9fb0c3', borderDash: [6, 4], tension: .25, fill: false }
+          ]
+        },
+        options: {
+          plugins: { legend: { labels: { color: '#e8eef5' } } },
+          scales: {
+            y: { ticks: { color: '#9fb0c3', callback: function (v) { return 'R' + (v / 1000).toFixed(0) + 'k'; } }, grid: { color: 'rgba(255,255,255,.06)' } },
+            x: { ticks: { color: '#9fb0c3' }, grid: { color: 'rgba(255,255,255,.06)' } }
+          }
+        }
+      });
+    }
+  })();
+</script>
+{% endblock %}

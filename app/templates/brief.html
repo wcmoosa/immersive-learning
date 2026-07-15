@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% set active_step = 'brief' %}
+{% block title %}Round {{ run.current_round }} brief · Meridian Analyst{% endblock %}
+{% block content %}
+{% include "_progress.html" %}
+
+<div class="page-head">
+  <h1>{{ brief.headline }}</h1>
+  <p class="muted">Managing {{ pack.client.name }}'s {{ pack.starting_capital | zar }} · mandate: {{ pack.client.mandate.summary }}</p>
+</div>
+
+<div class="card">
+  <p>{{ brief.body }}</p>
+  {% if brief.sector_news %}
+  <ul class="news">
+    {% for item in brief.sector_news %}<li>{{ item }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Market snapshot — Meridian Exchange</h2>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>Company</th><th>Sector</th><th>Price now</th>{% if run.current_round > 1 %}<th>Last round</th>{% endif %}</tr>
+      </thead>
+      <tbody>
+        {% for share in pack.shares %}
+        {% set price_now = share.price_at_start_of_round(run.current_round) %}
+        <tr>
+          <td>{{ share.name }} <span class="ticker">{{ share.id }}</span></td>
+          <td>{{ share.sector }}</td>
+          <td>R{{ "%.2f"|format(price_now) }}</td>
+          {% if run.current_round > 1 %}
+            {% set prev = share.price_at_start_of_round(run.current_round - 1) %}
+            {% set chg = (price_now / prev - 1) %}
+            <td class="{{ 'up' if chg >= 0 else 'down' }}">{{ chg | pct }}</td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted hint">Prices are in ZAR on the fictional Meridian Exchange. Every move is authored and explained — nothing is random.</p>
+</div>
+
+<form method="post" action="/run/brief">
+  <button class="btn btn-primary" type="submit">Record your forecast →</button>
+</form>
+{% endblock %}

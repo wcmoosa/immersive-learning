@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ student.display_name }} · Lecturer view{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ student.display_name }}</h1>
+  <p class="muted">
+    {% if run.status == 'completed' %}Completed · composite {{ run.composite_score | round(0) | int }}/100 · final value {{ run.final_value | zar }}
+    {% else %}In progress · round {{ run.current_round }} of {{ pack.total_rounds }}{% endif %}
+    · client trust {{ run.client_trust | round(0) | int }}/100
+  </p>
+  <a class="btn btn-ghost btn-sm" href="/lecturer">← Back to cohort</a>
+</div>
+
+{% if run.composite_breakdown %}
+<div class="card">
+  <h2>Composite breakdown</h2>
+  {% for c in run.composite_breakdown.components %}
+  <div class="component">
+    <div class="component-head">
+      <span class="component-label">{{ c.label }}</span>
+      <span class="component-weight">weight {{ (c.weight * 100) | round(0) | int }}%</span>
+      <span class="component-score">{{ c.score | round(0) | int }}/100</span>
+    </div>
+    <div class="gauge-track slim"><div class="gauge-fill g-brand" style="width: {{ c.score }}%;"></div></div>
+    <p class="muted">{{ c.why }}</p>
+    {% if c.indicative %}<p class="indicative-note">AI indicative reading: {{ c.indicative.rating | round(0) | int }}/100 <em>(display only — not scored)</em></p>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if run.badges %}
+<div class="card badge-card">
+  <h2>Credentials earned</h2>
+  <p class="muted">Awarded by deterministic rule over the student's own decisions — display-only, never part of the composite score.</p>
+  <div class="badge-awards">
+    {% for b in run.badges %}
+    <div class="badge-award">
+      <span class="badge-icon">{{ b.icon }}</span>
+      <div class="badge-body">
+        <div class="badge-name">{{ b.name }}{% if b.round %}<span class="badge-round">Round {{ b.round }}</span>{% endif %}</div>
+        <p class="badge-why">{{ b.why }}</p>
+        {% if b.citation %}<p class="badge-citation">“{{ b.citation }}” <span class="muted">— citation ({{ b.citation_source }})</span></p>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% for p in journey %}
+{% set r = p.results %}
+<div class="card round-recap">
+  <div class="round-recap-head">
+    <h3>Round {{ p.round }}</h3>
+    <span class="{{ 'up' if r.portfolio_return >= r.benchmark_return else 'down' }}">{{ r.portfolio_return | pct }} vs market {{ r.benchmark_return | pct }}</span>
+  </div>
+
+  {% set d = (p.results) %}
+  <p class="alloc-summary">
+    {% for share in pack.shares %}{% if p.allocation.get(share.id, 0) %}<span class="chip">{{ share.id }} {{ p.allocation[share.id]|round(0)|int }}%</span>{% endif %}{% endfor %}
+    {% if p.allocation.get('CASH', 0) %}<span class="chip chip-cash">Cash {{ p.allocation['CASH']|round(0)|int }}%</span>{% endif %}
+  </p>
+  {% if not r.mandate.kept %}<p class="down">⚠ {{ r.mandate.why }}</p>{% endif %}
+
+  {% set refl = reflections.get(p.round) %}
+  {% if refl %}
+  <div class="recap-block">
+    <span class="recap-tag">Reflection{% if refl.quality_score is not none %} · quality {{ refl.quality_score | round(0) | int }}/100{% endif %}{% if refl.indicative_rating is not none %} · AI indicative {{ refl.indicative_rating | round(0) | int }}/100{% endif %}</span>
+    <p>{{ refl.text if refl.text else "(left blank)" }}</p>
+  </div>
+  {% endif %}
+
+  {% set fb = feedback_by_round.get(p.round) %}
+  {% if fb %}
+  <div class="recap-block"><span class="recap-tag">AI feedback ({{ fb.source }})</span><p>{{ fb.text }}</p></div>
+  {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

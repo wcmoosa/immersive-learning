@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Market Analyst Simulation{% endblock %}</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/htmx.min.js" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">◆</span>
+      <span class="brand-name">Meridian Analyst</span>
+      <span class="brand-sub">Market Analysis &amp; Forecasting Simulation</span>
+    </div>
+    {% if user %}
+    <nav class="topnav">
+      <span class="who">{{ user.display_name }} <span class="role-chip">{{ user.role }}</span></span>
+      <a class="btn btn-ghost" href="/logout">Log out</a>
+    </nav>
+    {% endif %}
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footsig">
+    Immersive learning showcase · Silverse × Regent Business School · Synthetic market — not investment advice · <a href="/about">About</a>
+  </footer>
+</body>
+</html>

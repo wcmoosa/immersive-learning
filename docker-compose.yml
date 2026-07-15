@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    ports:
+      # Host 8010 -> container 8100. The container's internal port is 8100 to
+      # avoid clashing with other app containers that use 8000; open
+      # http://localhost:8010 for the demo.
+      - "8010:8100"
+    # Secrets (OpenAI key, session secret) live in a gitignored .env — never in
+    # this file. The demo runs without it (AI feedback falls back to authored
+    # content), so .env is optional.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: "sqlite:////app/data/app.db"
+    volumes:
+      - app-data:/app/data
+
+volumes:
+  app-data:

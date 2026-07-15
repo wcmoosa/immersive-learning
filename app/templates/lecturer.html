@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Lecturer view · Meridian Analyst{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Cohort overview</h1>
+  <p class="muted">Read-only view of participant progress, decisions, reflections, and AI coaching. <span class="muted">Live — updates automatically.</span></p>
+</div>
+
+<div class="card"
+     hx-get="/lecturer"
+     hx-trigger="every 5s"
+     hx-select=".card"
+     hx-target="this"
+     hx-swap="outerHTML">
+  {% if rows %}
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>Analyst</th><th>Status</th><th>Progress</th><th>Composite</th><th>Client trust</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.name }}</td>
+          <td>
+            {% if row.status == 'completed' %}<span class="badge badge-done">Completed</span>
+            {% elif row.status == 'in_progress' %}<span class="badge badge-active">In progress</span>
+            {% else %}<span class="badge">Not started</span>{% endif %}
+          </td>
+          <td>{% if row.current_round %}Round {{ row.current_round }} / {{ pack.total_rounds }}{% else %}—{% endif %}</td>
+          <td>{% if row.composite is not none %}<strong>{{ row.composite | round(0) | int }}</strong>/100{% else %}—{% endif %}</td>
+          <td>{% if row.trust is not none %}{{ row.trust | round(0) | int }}/100{% else %}—{% endif %}</td>
+          <td>{% if row.run_id %}<a class="btn btn-ghost btn-sm" href="/lecturer/run/{{ row.run_id }}">View detail</a>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted">No participants yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

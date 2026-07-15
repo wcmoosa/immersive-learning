@@ -1,0 +1,23 @@
+{% set live = badges | selectattr('citation_source', 'equalto', 'openai') | list | length %}
+<div class="badge-awards">
+  {% for b in badges %}
+  <div class="badge-award">
+    <span class="badge-icon">{{ b.icon }}</span>
+    <div class="badge-body">
+      <div class="badge-name">
+        {{ b.name }}
+        {% if b.round %}<span class="badge-round">Round {{ b.round }}</span>{% endif %}
+      </div>
+      <p class="badge-why">{{ b.why }}</p>
+      {% if b.citation %}<p class="badge-citation">“{{ b.citation }}”</p>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<p class="feedback-source muted">
+  {% if live %}
+    Award decided by rule · citation written live by AI — the AI chooses the words, never the credential.
+  {% else %}
+    Award decided by rule · citation from pre-approved authored content.
+  {% endif %}
+</p>

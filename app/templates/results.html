@@ -69,6 +69,27 @@
   </div>
 </div>
 
+{% if round_badges %}
+<div class="card badge-card">
+  <h2>Credentials earned this round</h2>
+  <p class="muted">Awarded by rule the moment your results were computed. The desk is writing up the citations.</p>
+  <div id="badge-panel" hx-get="/run/{{ run.id }}/badges?round={{ run.current_round }}" hx-trigger="load" hx-swap="innerHTML">
+    <div class="badge-awards">
+      {% for b in round_badges %}
+      <div class="badge-award">
+        <span class="badge-icon">{{ b.icon }}</span>
+        <div class="badge-body">
+          <div class="badge-name">{{ b.name }}</div>
+          <p class="badge-why">{{ b.why }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="feedback-source muted"><span class="spinner"></span> The desk is writing up your citation…</p>
+  </div>
+</div>
+{% endif %}
+
 <div class="card feedback-card">
   <h2>Your advisor's feedback</h2>
   <div id="feedback-panel" hx-get="/run/feedback" hx-trigger="load" hx-swap="innerHTML">

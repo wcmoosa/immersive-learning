@@ -208,6 +208,34 @@ tr.you { background: rgba(63, 182, 168, 0.12); }
 .recap-tag { display: inline-block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand); margin-bottom: 0.2rem; }
 .recap-block p { margin: 0.1rem 0 0; }
 
+/* Analyst credentials (U9) — rule-awarded badges with AI-written citations. */
+.badge-card { border-color: rgba(240, 165, 0, 0.35); }
+.badge-awards { display: flex; flex-direction: column; gap: 0.75rem; margin: 0.9rem 0 0.6rem; }
+.badge-award {
+  display: flex; align-items: flex-start; gap: 0.9rem;
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px; padding: 0.8rem 1rem;
+}
+.badge-icon { font-size: 1.6rem; line-height: 1.2; flex-shrink: 0; }
+.badge-body { min-width: 0; }
+.badge-name { font-weight: 700; letter-spacing: 0.01em; }
+.badge-round {
+  margin-left: 0.5rem; padding: 0.05rem 0.5rem; border-radius: 999px;
+  border: 1px solid var(--line); font-size: 0.7rem; font-weight: 400;
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+}
+.badge-why { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.9rem; }
+.badge-citation {
+  margin: 0.5rem 0 0; padding-left: 0.75rem;
+  border-left: 2px solid var(--brand);
+  font-style: italic; color: var(--ink);
+}
+.badge-locked { margin-top: 1rem; }
+.chip-locked { color: var(--muted); opacity: 0.75; cursor: help; }
+.trophy-case { white-space: nowrap; font-size: 1.05rem; letter-spacing: 0.1rem; }
+.trophy { cursor: help; }
+
 @media (max-width: 640px) {
   .brand-sub { display: none; }
   .container { padding: 1.25rem 1rem; }

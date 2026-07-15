@@ -29,6 +29,25 @@
 </div>
 {% endif %}
 
+{% if run.badges %}
+<div class="card badge-card">
+  <h2>Credentials earned</h2>
+  <p class="muted">Awarded by deterministic rule over the student's own decisions — display-only, never part of the composite score.</p>
+  <div class="badge-awards">
+    {% for b in run.badges %}
+    <div class="badge-award">
+      <span class="badge-icon">{{ b.icon }}</span>
+      <div class="badge-body">
+        <div class="badge-name">{{ b.name }}{% if b.round %}<span class="badge-round">Round {{ b.round }}</span>{% endif %}</div>
+        <p class="badge-why">{{ b.why }}</p>
+        {% if b.citation %}<p class="badge-citation">“{{ b.citation }}” <span class="muted">— citation ({{ b.citation_source }})</span></p>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 {% for p in journey %}
 {% set r = p.results %}
 <div class="card round-recap">

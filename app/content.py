@@ -26,6 +26,20 @@ CASH_ID = "CASH"
 # Outcome categories for authored fallback coaching (plan R6).
 FEEDBACK_CATEGORIES = ("beat_kept", "beat_breached", "trailed_kept", "trailed_breached")
 
+# Badge ids requiring an authored fallback citation (U9). Declared here rather
+# than imported from ``app.badges`` because badges depends on this module; a
+# test asserts the two lists stay in step.
+BADGE_IDS = (
+    "market_beater",
+    "crisis_navigator",
+    "sharp_read",
+    "mandate_keeper",
+    "alpha_generator",
+    "trusted_advisor",
+    "diversifier",
+    "deep_thinker",
+)
+
 
 class ContentError(ValueError):
     """Raised when the scenario pack is missing or structurally invalid."""
@@ -101,6 +115,9 @@ class Brief:
 class Fallback:
     feedback: dict[str, str]
     reflection_prompts: list[str]
+    # Authored citation per badge id — used offline and whenever the live
+    # citation call fails, so an earned credential always reads as earned.
+    badge_citations: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -196,6 +213,13 @@ def _validate(pack: ContentPack) -> None:
         f"fallback.reflection_prompts needs at least {pack.total_rounds} entries",
     )
 
+    for badge_id in BADGE_IDS:
+        _require(
+            badge_id in pack.fallback.badge_citations
+            and bool(pack.fallback.badge_citations[badge_id].strip()),
+            f"fallback.badge_citations is missing authored text for '{badge_id}'",
+        )
+
 
 def _parse(raw: dict) -> ContentPack:
     try:
@@ -243,6 +267,9 @@ def _parse(raw: dict) -> ContentPack:
         fallback = Fallback(
             feedback={k: str(v) for k, v in raw["fallback"]["feedback"].items()},
             reflection_prompts=[str(p) for p in raw["fallback"]["reflection_prompts"]],
+            badge_citations={
+                k: str(v) for k, v in (raw["fallback"].get("badge_citations") or {}).items()
+            },
         )
         pack = ContentPack(
             title=raw["title"],

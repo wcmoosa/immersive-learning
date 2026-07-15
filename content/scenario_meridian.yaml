@@ -226,3 +226,35 @@ fallback:
     - "The Reserve Bank raised rates this quarter. How did that change your thinking about where to invest the client's money?"
     - "The supply shock helped one sector and hurt another. How did you weigh that trade-off in your allocation?"
     - "It's the final quarter. Across the whole year, what would you tell Mrs. Dlamini about how you managed her money?"
+  # Authored citations for the analyst credentials (U9). The *award* is always
+  # decided by a deterministic rule; these are the words that accompany it when
+  # the AI is unavailable. The live AI citation replaces only the wording.
+  badge_citations:
+    market_beater: >-
+      Outperformed the market without once reaching outside the client's
+      mandate — the desk notes that returns earned within the rules are the only
+      returns worth having.
+    crisis_navigator: >-
+      Held their nerve when the quarter turned. Where others were knocked off
+      course by the shock, this analyst read it early and came out ahead of the
+      market.
+    sharp_read: >-
+      Every directional call this quarter landed. That is not luck; that is a
+      sector read done properly, and the allocation followed the reasoning.
+    mandate_keeper: >-
+      Four quarters, four clean sheets. Mrs. Dlamini asked to be protected from
+      concentration and left with cash on hand, and this analyst never once let
+      her down.
+    alpha_generator: >-
+      Finished the year genuinely ahead of the market. Real alpha, delivered on
+      a real client's money, over a full cycle rather than a single lucky
+      quarter.
+    trusted_advisor: >-
+      Ends the year with the client's confidence higher than it started. Trust is
+      the slowest thing to earn on this desk and the fastest to lose.
+    diversifier: >-
+      Risk kept spread quarter after quarter. No single company was ever allowed
+      to decide this client's retirement — textbook portfolio discipline.
+    deep_thinker: >-
+      Reflected seriously after every round. The desk rates analysts who can
+      explain their own reasoning, not merely those who happen to be right.

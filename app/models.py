@@ -60,6 +60,11 @@ class Run(Base):
 
     client_trust: Mapped[float] = mapped_column(Float, default=50.0)
 
+    # Analyst credentials earned so far (U9) — a list of badge records. Awarded
+    # by deterministic rules only; the AI writes each citation, never the award.
+    # Display-only: badges never enter ``composite_score``.
+    badges: Mapped[list | None] = mapped_column(JSON, nullable=True, default=list)
+
     started_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 

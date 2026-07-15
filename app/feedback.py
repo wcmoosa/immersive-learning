@@ -57,6 +57,16 @@ _RATE_SYSTEM = (
     "number."
 )
 
+_CITATION_SYSTEM = (
+    "You write the citation that accompanies a professional commendation, in the "
+    "voice of a senior partner at an investment firm writing about a junior "
+    "analyst. The analyst has ALREADY earned this award — it was decided by the "
+    "firm's rules, not by you, so never question, qualify, or withhold it. Use "
+    "only the facts provided; never invent numbers. Never state or imply any "
+    "score, grade, or mark. Write one or two sentences, warm and specific, under "
+    "45 words."
+)
+
 
 @dataclass
 class FeedbackResult:
@@ -125,6 +135,9 @@ class FeedbackService(ABC):
     @abstractmethod
     def rate_reflection(self, *, text: str) -> tuple[float, str]: ...
 
+    @abstractmethod
+    def badge_citation(self, *, badge_id: str, badge_name: str, badge_why: str) -> FeedbackResult: ...
+
 
 class CannedFeedbackService(FeedbackService):
     """Authored, deterministic content — the offline and fallback path."""
@@ -145,6 +158,12 @@ class CannedFeedbackService(FeedbackService):
         # A gentle deterministic reading of engagement for the offline path.
         score = min(100.0, 30.0 + words * 2.0)
         return score, f"Indicative reading from a {words}-word reflection."
+
+    def badge_citation(self, *, badge_id, badge_name, badge_why) -> FeedbackResult:
+        # The rule's own "why" is a complete, honest citation on its own — the
+        # authored text only makes it read like a commendation.
+        text = self.pack.fallback.badge_citations.get(badge_id) or badge_why
+        return FeedbackResult(text=text, source="canned")
 
 
 class OpenAIFeedbackService(FeedbackService):
@@ -210,6 +229,24 @@ class OpenAIFeedbackService(FeedbackService):
         except Exception:
             pass
         return self._canned.rate_reflection(text=text)
+
+    def badge_citation(self, *, badge_id, badge_name, badge_why) -> FeedbackResult:
+        user = (
+            f"Client: {self.pack.client.name}, whose mandate is: "
+            f"{self.pack.client.mandate.summary}\n"
+            f"Award earned: {badge_name}.\n"
+            f"The firm's rule awarded it because: {badge_why}\n"
+            "Write the citation."
+        )
+        try:
+            text = self._chat(_CITATION_SYSTEM, user, max_tokens=120)
+            if text:
+                return FeedbackResult(text=text, source="openai")
+        except Exception:
+            pass
+        return self._canned.badge_citation(
+            badge_id=badge_id, badge_name=badge_name, badge_why=badge_why
+        )
 
 
 def get_feedback_service(pack: ContentPack) -> FeedbackService:
